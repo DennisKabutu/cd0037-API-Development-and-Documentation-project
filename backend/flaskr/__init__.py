@@ -43,27 +43,30 @@ def create_app(test_config=None):
         response.headers.add('Access-Control-Allow-Header','GET,POST,PUT,PATCH,DELETE,OPTIONS')
         return response
 
-    """
-    @:
-    Create an endpoint to handle GET requests
-    for all available categories.
-    """
+    #an endpoint to handle GET requests for all available categories.
     @app.route('/categories', methods=['GET'])
     def get_all_categories():
-        ## query the database for all categories 
-        categories = Category.query.order_by(Category.type).all()
-        ##  Check list is not empty  loop through it and format as result 
-        ##  if empty throw a 404 error 
-        if categories:
-            all_categories = [category.format() for category in categories]
-            return jsonify({
-                'success':True,
-                'categories':all_categories
-            })
-        else:
-           return abort(404)
+        try:
+            ## query the database for all categories 
+            categories = Category.query.order_by(Category.type).all()
+            ##  Check list is not empty  loop through it and format as result 
+            ##  if empty throw a 404 error 
+            if categories:
 
-        
+                all_categories = {}
+                for category in categories:
+                #Append category with ID as the  Key and type as Value 
+                    all_categories[category.id] = category.type
+                return jsonify({
+                    'success':True,
+                    'categories':all_categories
+                })
+            else:
+                 abort(404)
+        except:
+              abort(422)
+
+
     """
     @TODO:
     Create an endpoint to handle GET requests for questions,
@@ -78,21 +81,32 @@ def create_app(test_config=None):
     """
     @app.route('/questions',methods=['GET'])
     def get_all_questions():
+        try:
         ##get list of questions paginated 10 question
-        questions = Question.query.order_by(Question.id).all()
-        if questions:
-            paginated_questions = paginate_questions(request,questions)
+            questions = Question.query.order_by(Question.id).all()
+            if questions:
+                paginated_questions = paginate_questions(request,questions)
+            else:
+                abort(404)
         #get categories using the get_all_categories method 
-        categories = Category.query.order_by(Category.type).all()
-        if categories:
-            all_categories = [category.format() for category in categories]
+            categories = Category.query.order_by(Category.type).all()
+            if categories:
+           ## all_categories = [category.format() for category in categories]
+                all_categories = {}
+                for category in categories:
+                    all_categories[category.id] = category.type
+            else:
+                abort(404)
+        except:
+            abort(422)
+
 
             # return list of questions  
         return jsonify({
             "success":True,
             "question":paginated_questions,
-            "number of total questions":len(questions),
-            "category":all_categories
+            "number of total questions":len(Question.query.all()),
+            "category":all_categories,
         })
     
       
@@ -169,6 +183,7 @@ def create_app(test_config=None):
     """
     @app.route('/questions',methods = ['POST'])
     def search_question():
+
         body = request.get_json()
         if (body.get('searchTerm')):
             search_term = body.get('searchTerm')
@@ -201,15 +216,10 @@ def create_app(test_config=None):
     @app.route('/categories/<int:category_id>/questions' ,methods = ['GET'])
     def get_questions_by_category(category_id):
         category = Category.query.filter_by(id=category_id).one_or_none()
-
         if category is None:
             abort(400)
-        
         data = Question.query.filter_by(category = category.id).all()
-
         formatted_questions = paginate_questions(request=request,selected_list=data)
-
-
         return jsonify({
             'success':True,
             'questions':formatted_questions,
@@ -228,12 +238,7 @@ def create_app(test_config=None):
     one question at a time is displayed, the user is allowed to answer
     and shown whether they were correct or not.
     """
-    """
     
-    @TODO:
-    Create error handlers for all expected errors
-    including 404 and 422.
-    """
     #create a route to quizes '/quizzes with a POST Method
     @app.route('/quizzes', methods=['POST'])
     def play_quizes():
@@ -276,6 +281,12 @@ def create_app(test_config=None):
             'success': True,
             'quiz_questions':random_questions_list
         })
+        
+    """
+    @TODO:
+    Create error handlers for all expected errors
+    including 404 and 422.
+    """
 
 
     @app.errorhandler(404)
