@@ -52,7 +52,6 @@ def create_app(test_config=None):
             ##  Check list is not empty  loop through it and format as result 
             ##  if empty throw a 404 error 
             if categories:
-
                 all_categories = {}
                 for category in categories:
                 #Append category with ID as the  Key and type as Value 
@@ -68,16 +67,9 @@ def create_app(test_config=None):
 
 
     """
-    @TODO:
-    Create an endpoint to handle GET requests for questions,
-    including pagination (every 10 questions).
+    An endpoint to handle GET requests for questions,including pagination (every 10 questions).
     This endpoint should return a list of questions,
     number of total questions, current category, categories.
-
-    TEST: At this point, when you start the application
-    you should see questions and categories generated,
-    ten questions per page and pagination at the bottom of the screen for three pages.
-    Clicking on the page numbers should update the questions.
     """
     @app.route('/questions',methods=['GET'])
     def get_all_questions():
@@ -88,20 +80,19 @@ def create_app(test_config=None):
                 paginated_questions = paginate_questions(request,questions)
             else:
                 abort(404)
-        #get categories using the get_all_categories method 
+        #get categories ordered by category type 
             categories = Category.query.order_by(Category.type).all()
+        ## check if categories is empty 
             if categories:
-           ## all_categories = [category.format() for category in categories]
                 all_categories = {}
+        ## Populate the all_categories dict with Category ID and Category Type
                 for category in categories:
                     all_categories[category.id] = category.type
             else:
                 abort(404)
         except:
             abort(422)
-
-
-            # return list of questions  
+        # return Jsonified paginated list of questions, Total of number of Questions and Categories   
         return jsonify({
             "success":True,
             "question":paginated_questions,
@@ -118,58 +109,60 @@ def create_app(test_config=None):
     This removal will persist in the database and when you refresh the page.
     """
     @app.route('/questions/<int:question_id>', methods=['DELETE'])
-    def get_specific_plant(question_id):
-
-        question = Question.query.filter(Question.id==question_id).one_or_none()
-
-        if question is None:
-            abort(404)
-        else:
-            Question.delete(question)  
-
+    def delete_question(question_id):
+        try:
+            question = Question.query.filter(Question.id==question_id).one_or_none()
+            if question is None:
+                abort(404)
+            else:
+                Question.delete(question)   
             return jsonify({
                 'success': True,
-               ## 'question': question.format(),
+               'questionId':question.id,
             })
+        except:
+            abort(422)
 
     
 
     """
-    @TODO:
     Create an endpoint to POST a new question,
     which will require the question and answer text,
     category, and difficulty score.
-
-    TEST: When you submit a question on the "Add" tab,
-    the form will clear and the question will appear at the end of the last page
-    of the questions list in the "List" tab.
     """
+    
     @app.route('/questions', methods = ['POST'])
     def create_question():
-        data = request.get_json()
+        body = request.get_json()
+        new_question = body.get('question', None)
+        new_answer = body.get('answer', None)
+        new_category = body.get('category', None)
+        new_difficulty = body.get('difficulty', None)
+
+        if(new_question is None or new_answer is None or new_category is None or new_difficulty is None):
+               return abort(400)
 
         try:
             question = Question(
-                question = data.get('question',None),
-                answer = data.get('answer',None),
-                category = data.get('category',None),
-                difficulty= data.get('difficulty',None)
-            )
+                    question=new_question,
+                    answer=new_answer,
+                    category=new_category,
+                    difficulty=new_difficulty
+                    )
 
-            Question.insert(question)
-
-            selected_questions = Question.query.order_by(Question.id).all()
-            #@ TODO Paginated question function not added
-            formatted_questions = [ question.format() for question in selected_questions]
+            question.insert()
 
             return jsonify({
-                'success':True,
-                'questions': formatted_questions,
-                'created':question.id,
-                'total_question':len(selected_questions)
+                    'success':True,
+                    'created_id':question.id,
             })
-        except:
-            Abort(422)
+        except :
+            return abort(422)
+
+
+
+
+           
 
 
     """
@@ -181,28 +174,29 @@ def create_app(test_config=None):
     only question that include that string within their question.
     Try using the word "title" to start.
     """
-    @app.route('/questions',methods = ['POST'])
-    def search_question():
+    @app.route('/questions/search', methods=['POST'])
+    def search_questions():
+        try:
+            body_data = request.get_json()
+            search_term = body_data.get('searchTerm', None)
 
-        body = request.get_json()
-        if (body.get('searchTerm')):
-            search_term = body.get('searchTerm')
+            if search_term is not None:
+                search_results = Question.query.filter(
+                    Question.question.ilike(f'%{search_term}%')).all()
 
-            selection = Question.query.filter(
-                Question.question.ilike(f'%{search_term}%')
-            ).all()
+                formatted_search_results = [question.format() for question in search_results]
 
-            if (len(selection) == 0):
+                return jsonify({
+                    'success': True,
+                    'questions': formatted_search_results,
+                    'total_questions': len(search_results), 
+                 })
+            else:
                 abort(404)
-            
-            formatted_question = paginate_questions(request,selection)
-
-            return jsonify({
-                'success':True,
-                'question':formatted_question,
-                'total_question':len(Question.query.all())
-
-            })
+        except:
+            abort(422)
+        
+       
         
 
     """
@@ -215,17 +209,23 @@ def create_app(test_config=None):
     """
     @app.route('/categories/<int:category_id>/questions' ,methods = ['GET'])
     def get_questions_by_category(category_id):
-        category = Category.query.filter_by(id=category_id).one_or_none()
-        if category is None:
-            abort(400)
-        data = Question.query.filter_by(category = category.id).all()
-        formatted_questions = paginate_questions(request=request,selected_list=data)
-        return jsonify({
-            'success':True,
-            'questions':formatted_questions,
-            'total_questions':len(data),
-            'current_category':category.type
-        })
+        try:
+            category = Category.query.filter_by(id=category_id).one_or_none()
+
+            if category is None:
+                abort(404)
+
+            questions_based_categories = Question.query.filter_by(category = category.id).all()
+            formatted_questions = [question.format() for question in questions_based_categories]
+
+            return jsonify({
+                'success':True,
+                'questions':formatted_questions,
+                'total_questions':len(Question.query.all()),
+                'current_category':category.type
+            })
+        except:
+            abort(422)
         
     """
     @TODO:
