@@ -127,7 +127,7 @@ The API will return three types of errors:
 
 #### GET /categories
 
-* General: Returns a list categories.
+* General: Returns a list of categories ordered by Category ID.
 * Sample: `curl http://127.0.0.1:5000/categories`<br>
 
         {
@@ -238,8 +238,8 @@ The API will return three types of errors:
 #### DELETE /questions/\<int:id\>
 
 * General:
-  * Deletes a question of the specified id using url parameters.
-  * Returns id of deleted question upon success.
+  * Deletes a question of the specified id in request parameters in the JSON object.
+  * Returns id of deleted question upon success alongside with the message success.
 * Sample: `curl http://127.0.0.1:5000/questions/6 -X DELETE`<br>
 
         {
@@ -251,7 +251,8 @@ The API will return three types of errors:
 
 This endpoint either creates a new question or returns search results.
 
-1. If <strong>no</strong> search term is included in request:
+1. If <strong>no</strong> search term is included in request the create new question request will run
+2. Bad request <strong> 404 error</strong> will be return with the correct JSON request params are ommitted.
 
 * General:
   * Creates a new question using JSON request parameters.
@@ -268,11 +269,11 @@ This endpoint either creates a new question or returns search results.
             "success": true
         }
 
-2. If search term <strong>is</strong> included in request:
+2. If search term <strong>is</strong> included in JSON request parameters:
 
 * General:
   * Searches for questions using search term in the JSON request parameter.
-  * Returns JSON object with paginated search results.
+  * Returns JSON object with paginated search results that match the query.
 * Sample: `curl http://127.0.0.1:5000/questions -X POST -H "Content-Type: application/json" -d '{"searchTerm": "Youtube"}'`<br>
 
         {
@@ -285,14 +286,19 @@ This endpoint either creates a new question or returns search results.
                     "question": " Which song by Luis Fonsi and Daddy Yankee has the most views (of all time) on YouTube"
                 }, 
                
-                
+        {       
                
             "success": true
         }
 
 ## Authors
 
-Dennis Kabutu authored the API (`__init__.py`), test suite (`test_flaskr.py`), and this README.<br>
+Dennis Kimani Kabutu authored  the following files
+1. API (`__init__.py`),
+2. test suite (`test_flaskr.py`) *not yet completed*
+3. and this README.<br>
 
 
-All other project files, including the models and frontend, were created by [Udacity](https://www.udacity.com/) as a project template for the [Full Stack Web Developer Nanodegree](https://www.udacity.com/course/full-stack-web-developer-nanodegree--nd0044).
+All other project files, including the models and frontend, were created by the [Udacity] team (https://www.udacity.com/) as a project template for the [Full Stack Web Developer Nanodegree](https://www.udacity.com/course/full-stack-web-developer-nanodegree--nd0044) for the Trivia Project to test API Development and Documentation.
+
+Free feel to leave any feedback and tips for improvement 
