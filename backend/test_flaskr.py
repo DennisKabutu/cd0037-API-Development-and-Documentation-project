@@ -15,7 +15,7 @@ class TriviaTestCase(unittest.TestCase):
         self.app = create_app()
         self.client = self.app.test_client
         self.database_name = "trivia_test"
-        self.database_path = "postgres://{}/{}".format('localhost:5432', self.database_name)
+        self.database_path = "postgres://{}/{}".format('postgres:1234@localhost:5432', self.database_name)
         setup_db(self.app, self.database_path)
 
         self.test_question = {
@@ -50,7 +50,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(response_data['success'],True)
         #check if questions and total questions
         self.assertEqual(response_data['questions'])
-        self.assertEqual(response_data['total number of questions'])
+        self.assertEqual(response_data['totalQuestions'])
     
     ##Test adding question 
 
@@ -58,7 +58,7 @@ class TriviaTestCase(unittest.TestCase):
         response = self.client().post('/questions',json=self.test_question)
         json_data = json.loads(response.data)
         created_question = Question.query.filter_by( id= json_data['created_id']).one_or_more()
-        self.assertIsNone(created_question)
+        self.assertIsNotNone(created_question)
         self.assertEqual(response.status_code, 200)
     
     def test_search_question(self):
@@ -68,12 +68,12 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEquals(response.status_code,200)
         self.assertEquals(json_data['success'],True)
         self.assertEquals(len(json_data['questions']),1)
+
+
     def test_404_if_search_questions_fails(self):
         """Tests search questions failure 404"""
-
         # send post request with search term that should fail
         response = self.client().post('/questions',json={'searchTerm': 'random'})
-
         # load response data
         response_data = json.loads(response.data)
         # check response status code and message
