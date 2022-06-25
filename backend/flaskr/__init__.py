@@ -26,7 +26,7 @@ def create_app(test_config=None):
     """
      Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
     """
-    CORS(app, resources={r'api/*:{"origins":"*"}'})
+    CORS(app, resources={r'/*:{"origins":"*"}'})
    
 
     """
@@ -41,7 +41,6 @@ def create_app(test_config=None):
     
     @app.route('/questions', methods = ['POST'])
     def post_route_handler():
-
         body = request.get_json()
         if ('searchTerm' in body):
             return search_questions()
@@ -102,8 +101,9 @@ def create_app(test_config=None):
         return jsonify({
             "success":True,
             "questions":paginated_questions,
-            "total number of questions":len(Question.query.all()),
-            "category":all_categories,
+            "totalQuestions":len(Question.query.all()),
+            "categories":all_categories,
+            ##"currentCategory":
         })
     
       
@@ -190,7 +190,8 @@ def create_app(test_config=None):
                 return jsonify({
                     'success': True,
                     'questions': formatted_search_results,
-                    'total_questions': len(search_results), 
+                    'totalQuestions': len(search_results),
+                    'currentCategory':formatted_search_results[0].category,
                  })
             else:
                 abort(404)
@@ -220,8 +221,8 @@ def create_app(test_config=None):
             return jsonify({
                 'success':True,
                 'questions':formatted_questions,
-                'total_questions':len(Question.query.all()),
-                'current_category':category.type
+                'totalQuestions':len(Question.query.all()),
+                'currentCategory':category.type
             })
         except:
             abort(422)
@@ -274,7 +275,7 @@ def create_app(test_config=None):
 
         return jsonify({
             'success': True,
-            'quiz_questions':random_questions_list
+            'question':random_questions_list
         })
         
     """
