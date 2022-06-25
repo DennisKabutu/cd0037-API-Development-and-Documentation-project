@@ -1,8 +1,3 @@
-from ast import Pass
-import re
-from tracemalloc import start
-from unicodedata import category
-from click import Abort
 from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -248,7 +243,7 @@ def create_app(test_config=None):
         body_data = request.get_json()
         # Check is the request body is empty and turn an 400 error if empty 
         if not body_data :
-            Abort(400)
+            abort(400)
         # Get the previous_question from the request body and return None if empty.
         # Get the current_category from the request body and return None if empty
         previous_questions_list = body_data.get('previous_questions',None)
