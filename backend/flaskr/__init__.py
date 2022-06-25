@@ -191,7 +191,7 @@ def create_app(test_config=None):
                     'success': True,
                     'questions': formatted_search_results,
                     'totalQuestions': len(search_results),
-                    #'currentCategory':formatted_search_results[0].category,
+                    #'currentCategory':formatted_search_results[0].category,// TODO 
                  })
             else:
                 abort(404)
